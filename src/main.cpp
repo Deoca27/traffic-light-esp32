@@ -55,8 +55,17 @@ void callback(char* topic, byte* message, unsigned int length) {
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Menghubungkan ke MQTT...");
-    if (client.connect("ESP32TrafficLight")) {
+
+    // Set Last Will: kalau ESP mati mendadak → broker publish "OFFLINE"
+    if (client.connect("ESP32TrafficLight",
+                       NULL, NULL,
+                       "trafficlight/status", 0, true, "OFFLINE")) {
       Serial.println("Terhubung!");
+
+      // Publish status ONLINE setelah connect
+      client.publish("trafficlight/status", "ONLINE", true);
+
+      // Subscribe topik kontrol
       client.subscribe("trafficlight/control");
     } else {
       Serial.print("Gagal, rc=");
@@ -66,6 +75,7 @@ void reconnect() {
     }
   }
 }
+
 
 void setup() {
   Serial.begin(115200);
