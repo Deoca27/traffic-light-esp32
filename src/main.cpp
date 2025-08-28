@@ -21,7 +21,11 @@ PubSubClient client(espClient);
 String currentStatus = "Merah";
 bool isRunning = true;
 
-// Fungsi update status ke broker
+// Heartbeat
+unsigned long lastHeartbeat = 0;
+const long heartbeatInterval = 2000; // 2 detik
+
+// Fungsi update status lampu ke broker
 void setStatus(String status) {
   currentStatus = status;
   client.publish("trafficlight/status", status.c_str());
@@ -55,17 +59,8 @@ void callback(char* topic, byte* message, unsigned int length) {
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Menghubungkan ke MQTT...");
-
-    // Set Last Will: kalau ESP mati mendadak → broker publish "OFFLINE"
-    if (client.connect("ESP32TrafficLight",
-                       NULL, NULL,
-                       "trafficlight/status", 0, true, "OFFLINE")) {
+    if (client.connect("ESP32TrafficLight")) {
       Serial.println("Terhubung!");
-
-      // Publish status ONLINE setelah connect
-      client.publish("trafficlight/status", "ONLINE", true);
-
-      // Subscribe topik kontrol
       client.subscribe("trafficlight/control");
     } else {
       Serial.print("Gagal, rc=");
@@ -75,7 +70,6 @@ void reconnect() {
     }
   }
 }
-
 
 void setup() {
   Serial.begin(115200);
@@ -106,12 +100,24 @@ void delayWithCheck(int totalMillis) {
     delay(interval);
     client.loop();          // proses MQTT agar OFF bisa diterima
     if (!isRunning) return; // keluar langsung saat OFF
+
+    // Heartbeat di delay
+    if (millis() - lastHeartbeat > heartbeatInterval) {
+      client.publish("trafficlight/heartbeat", "PING");
+      lastHeartbeat = millis();
+    }
   }
 }
 
 void loop() {
   if (!client.connected()) reconnect();
   client.loop();
+
+  // Heartbeat normal
+  if (millis() - lastHeartbeat > heartbeatInterval) {
+    client.publish("trafficlight/heartbeat", "PING");
+    lastHeartbeat = millis();
+  }
 
   if (!isRunning) {
     delay(100);
