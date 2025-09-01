@@ -138,18 +138,18 @@ void loop() {
   digitalWrite(kuningPin, HIGH);
   digitalWrite(hijauPin, LOW);
   setStatus("Merah + Kuning");
-  delayWithCheck(1500);
+  delayWithCheck(2000);
 
   if (!isRunning) return;
 
   // ===== Fase Kuning =====
-  digitalWrite(merahPin, LOW);
-  digitalWrite(kuningPin, HIGH);
-  digitalWrite(hijauPin, LOW);
-  setStatus("Kuning");
-  delayWithCheck(500);
+  // digitalWrite(merahPin, LOW);
+  // digitalWrite(kuningPin, HIGH);
+  // digitalWrite(hijauPin, LOW);
+  // setStatus("Kuning");
+  // delayWithCheck(500);
 
-  if (!isRunning) return;
+  // if (!isRunning) return;
 
   // ===== Fase Hijau =====
   digitalWrite(merahPin, LOW);
